@@ -26,3 +26,4 @@ class GUIController:
         if sys.argv[1] == "gui":
             self.periodic_call()
         print("Set up")     # why
+
