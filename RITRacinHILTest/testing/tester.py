@@ -1,4 +1,4 @@
 def main():
-    print("A")
+    print("Abc")
 
 main()
