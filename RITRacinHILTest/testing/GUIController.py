@@ -27,3 +27,20 @@ class GUIController:
             self.periodic_call()
         print("Set up")     # why
 
+    def end(self):
+        self.actions.threadActive = False
+
+    #formats the  message, pushes a command to a queue in actions for test
+    def send(self, msg):
+        split_msg = msg.split()         # separates msg where the paces are to a list of words
+        if (split_msg[0] == "CHK") or (split_msg[0] == "SET"):
+            if split_msg[1].isnumeric():
+                if(split_msg[2] == "0") or  (split_msg[2] == "1"):
+                    self.actions.commandQueue.put(self.actions.command("send", ["SND " + msg.upper()]))
+                else:  # not 0  or 1 setting
+                    self.GUI_view.printMsg("MSG is invalid, message must be 0 or 1")
+            else:  #not  valid pin number
+                self.GUI_view.printMsg("MSG is invalid, pin must be a number")
+        else:   # not valid Set or CHK
+            self.GUI_view.printMsg("ID is invalid, must be 3 hex characters")
+
