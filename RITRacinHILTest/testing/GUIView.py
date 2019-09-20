@@ -23,11 +23,10 @@ class GUI_View:
         log_frame = ttk.Frame(master, padding="0 0 40 40")
         log_frame.grid(row=2, column=1, rowspan=12, columnspan=1)
 
-        #  creating the top labels
+        #  creating the elements in the gui
         entry_label = Label(master, text="File Name or Message")
         log_label = Label(master, text="Log:")
         act_label = Label(master, text="Actions")
-
         entry1 = Entry(master)
         enter_button = Button(master, text="Enter", columnspan=1)
         log_button = Button(master, text="Log Data", columnspan=1)

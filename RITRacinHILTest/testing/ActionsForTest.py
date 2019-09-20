@@ -8,11 +8,12 @@ command tuple: command and argument that gets pushed to the queue
 import datetime
 import xlwt
 import time
-import serial
+
 from collections import namedtuple
 from queue import Queue
+import serial
 
-class arduino_actions():
+class ArduinoActions():
 
     msg_line = 1
     arduinoData = None
@@ -63,7 +64,7 @@ class arduino_actions():
                     self.send(msg)
                     time.sleep(0.003)
 
-
+    # writes the message to a file "results.txt"
     def get(self, msgNum):
         self.arduinoData.write('LOG'.encode('utf-8'))
         f = open("results.txt",  "w+")
@@ -76,7 +77,8 @@ class arduino_actions():
         f.close()
 
 
-    #continuously loop and read messages until you stop logging (bool set to false)
+    # continuously loop and read messages until you stop logging (bool set to false)
+    # write the results to "results.txt"
     def infiniteLog(self, doPrint):
         self.doInfiniteLog = True
         file = open("results.txt", "a")
@@ -87,7 +89,7 @@ class arduino_actions():
                 file.write(get_msg)
                 if doPrint:
                     self.view.printMsg(get_msg)
-            self.handleCommands() #call handle command so it will go back tohandle command
+            self.handleCommands  #call handle command so it will go back tohandle command
         file.close()
         #self.arduinoData.write('IDL'.encode('utf-8'))
 
@@ -105,22 +107,23 @@ class arduino_actions():
     #checks if the queue is empty
     #takes the  command from command touple and checks what they are
     #send command calls send  in actions for test which actually sends the message
+    @property
     def handleCommands(self):
         if not self.commandQueue.empty():
             sent_command = self.commandQueue.get()
             if sent_command.cmd == "getN":
                 self.get(sent_command.args[0])
-            elif sent_command.cmd == "send":    # is a button on gui
+            elif sent_command.cmd == "send":            # is a button on gui
                 self.send(sent_command.args[0])
-            elif sent_command.cmd == "sendMult":    #is a button on gui i got rid of this one b/c file loop?
+            elif sent_command.cmd == "sendMult":        # is a button on gui i got rid of this one b/c file loop?
                 self.doSend = True
                 self.send_multiple(sent_command.args[0])
             elif sent_command.cmd == "getCancel":
                 self.doInfiniteLog = False
-            elif sent_command.cmd == "getAll":
+            elif sent_command.cmd == "getAll":          # am not using
                 self.get(-1)
-            elif sent_command.cmd == "getBackground": #button log data logs it in the background, specifies where to log in the background
-                if not self.doInfiniteLog: # function will passively log in the background
+            elif sent_command.cmd == "getBackground":   # button log data logs it in the background, specifies where to log in the background
+                if not self.doInfiniteLog:              # function will passively log in the background
                     self.infiniteLog(sent_command.args[0])
             elif sent_command.cmd == "execTests":       # is a button on gui
                 self.doSend= True
@@ -128,13 +131,12 @@ class arduino_actions():
             elif sent_command.cmd == "cancelSend":      # is a button on gui
                 self.doSend=False
             return True
-        else:
-            return False
+        return False
 
    def run(self):
         self.arduinoData = serial.Serial(self.arduino_com, self.baudrate, timeout=0.5)
         self.threadActive = True
         while self.threadActive:
-            self.handleCommands() #infinite loop to keeps running commands
+            self.handleCommands  #infinite loop to keeps running commands
 
 
