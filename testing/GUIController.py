@@ -1,4 +1,4 @@
-from ActionsForTest import *
+import ActionsForTest
 from tkinter import *
 from GUIView import GUI_View
 from CommandLineView import commandline

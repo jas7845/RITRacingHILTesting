@@ -68,3 +68,4 @@ class GUI_View:
 
     def printMsg(self, msg):
         self.print_Queue.put(msg)
+

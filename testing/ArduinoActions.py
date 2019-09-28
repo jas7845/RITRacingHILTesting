@@ -45,24 +45,22 @@ class ArduinoActions():
     def write_arduino(self, msg):
         self.arduinoData.write(msg)
 
-
-    # Opens a file and sends an array of lines to send_mult
-    def read_multiple(self, filename):
-        with open(filename) as file:
-            self.send_Mult(file.readlines())  # readlines returns a list of lines
-        filename.close()    #I added this to his?
-
-
     # sends the message in the lines using send function
     def send_mult(self, msgs):
         for msg in msgs:
-            if self.doSend:                 # doSend: bool we set false in the beginning
+            if self.doSend:  # doSend: bool we set false in the beginning
                 if msg[0:5] == "delay":
                     delay_time = float(msg[6:])
                     time.sleep(0.003)
                 else:
                     self.send(msg)
                     time.sleep(0.003)
+
+    # Opens a file and sends an array of lines to send_mult
+    def read_multiple(self, filename):
+        with open(filename) as file:
+            self.send_Mult(file.readlines())  # readlines returns a list of lines
+        filename.close()    #I added this to his?
 
     # writes the message to a file "results.txt"
     def get(self, msgNum):
@@ -89,27 +87,29 @@ class ArduinoActions():
                 file.write(get_msg)
                 if doPrint:
                     self.view.printMsg(get_msg)
-            self.handleCommands  #call handle command so it will go back tohandle command
+            self.handleCommands  #call handle command so it will go back to handle command
         file.close()
         #self.arduinoData.write('IDL'.encode('utf-8'))
 
     # has stuff about the filter that needs to get rid of
+    # Think this is getting data from the arduino and formatting it
     def formattedRead(self, timeStamp):
         get_msg = self.arduinoData.readline()
         msg_txt = (get_msg.decode("utf-8")).strip(' \t\n\r')
-        if self.filter_active and not self.filter_text(msg_txt):
-            return ""
+        # if self.filter_active and not self.filter_text(msg_txt):
+        #    return ""
         if msg_txt != "":
             msg_txt = "0" + msg_txt.upper()
             if timeStamp:
                 msg_txt = msg_txt + "   " + datetime.datetime.fromtimestamp(time.time()).strftime('%H:%M:%S.%f') + "\n"
         return msg_txt
 
+    # handles send and check messages?
     def exec_tests(self, filename):
         print("Doing tests")
         self.view.printMsg("-------------Test------------\n")
         test_list = self.read_test_file(filename)
-        if test_list == "fnf":
+        if test_list == "fnf":  # file not found
             return
         for test in test_list:
             if self.doSend:
@@ -124,7 +124,7 @@ class ArduinoActions():
                     else:
                         self.view.printMsg("Test: " + curr_test_name + " succeeded \n")
 
-    # Not really sure what this si doing, should be comparing the received messages with the response
+    # Not really sure what this is doing, should be comparing the received messages with the response
     #   list but  im not sure how, something to do with "X" in the string
     def check_responses(self, response_list, timeout):
         got_all_messages = False
@@ -246,13 +246,13 @@ class ArduinoActions():
                     self.infiniteLog(sent_command.args[0])
             elif sent_command.cmd == "execTests":       # is a button on gui
                 self.doSend= True
-                self.exec_tests(sent_command.args[0])
+                self.exec_tests(sent_command.args[0])   # what is exec tests vs send? i guess send has lessfunctionality
             elif sent_command.cmd == "cancelSend":      # is a button on gui
                 self.doSend=False
             return True
         return False
 
-   def run(self):
+    def run(self):
         self.arduinoData = serial.Serial(self.arduino_com, self.baudrate, timeout=0.5)
         self.threadActive = True
         while self.threadActive:
