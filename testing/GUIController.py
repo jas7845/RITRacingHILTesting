@@ -1,7 +1,7 @@
-import ActionsForTest
+from testing.ArduinoActions import *
 from tkinter import *
-from GUIView import GUI_View
-from CommandLineView import commandline
+from testing.GUIView import GUIView
+from testing.CommandLineView import CommandLine
 import sys
 import threading
 import time
@@ -9,14 +9,15 @@ import time
 #  he imports other classes that i have not made yet, not sure if i need to do that
 
 
-class GUI_Controller:
+class GUIController:
     actions = None
-    GUI_View = None
+    GUI_view = None
+
     def __init__(self, master):
         if sys.argv[1] == "gui":
-            self.GUI_view = GUI_View(master, self)
+            self.GUI_view = GUIView(master, self)
         else:
-            self.GUI_view = commandline(self)
+            self.GUI_view = CommandLine(self)
 
         self.actions = ArduinoActions(sys.argv[2], sys.argv[3], self.GUI_view)
         readThread = threading.Thread(target=self.actions.run)
@@ -72,9 +73,10 @@ class GUI_Controller:
 
     def periodic_call(self):
         self.GUI_view.handle_print()
-        self.GUI_view.root.after(200, self.periodic_call)
+        self.GUI_view.master.after(200, self.periodic_call)  # master was root
 
-root = Tk()
-controller = GUI_Controller(root)
+
+master = Tk()
+controller = GUIController(master)
 if sys.argv[1] == "gui":
-    root.mainloop()
+    master.mainloop()

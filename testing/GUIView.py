@@ -7,12 +7,12 @@ from queue import Queue
 doLog = False
 
 
-class GUI_View:
+class GUIView:
 
     print_Queue = Queue()  # Queue that contains commands
     logger = None
     controller = None
-    master = Tk()  # None
+    #master = Tk()  # None
 
     def __init__(self, master, controller):
         self.master = master
@@ -20,7 +20,7 @@ class GUI_View:
         master.protocol("WM_DELETE_WINDOW", self.on_closing)
         master.title("RIT Formula HIL Testing")
         master.iconbitmap('rit2.ico')
-        log_frame = ttk.Frame(master, padding="0 0 40 40")
+        log_frame = ttk.Frame(master, padding="0 0 40 40")  # master was ttk
         log_frame.grid(row=2, column=1, rowspan=12, columnspan=1)
 
         #  creating the elements in the gui
@@ -28,9 +28,9 @@ class GUI_View:
         log_label = Label(master, text="Log:")
         act_label = Label(master, text="Actions")
         entry1 = Entry(master)
-        enter_button = Button(master, text="Enter", columnspan=1)
-        log_button = Button(master, text="Log Data", columnspan=1)
-        end_button = Button(master, text="End Logging Data", columnspan=1)
+        enter_button = Button(master, text="Enter")
+        log_button = Button(master, text="Log Data")
+        end_button = Button(master, text="End Logging Data")
 
         #  adding labels to row one
         log_label.grid(row=1, column=0, pady=2)  # log label
@@ -64,7 +64,18 @@ class GUI_View:
     def on_closing(self):
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             self.controller.end()
-            self.root.destroy()
+            self.master.destroy()
+
+    def handle_print(self):
+        while self.print_Queue.qsize():
+            try:
+                msg = self.print_Queue.get()
+                self.logger.config(state=NORMAL)
+                self.logger.insert(END, msg)
+                self.logger.see(END)
+                self.logger.config(state=DISABLED)
+            except Queue.empty():
+                pass
 
     def printMsg(self, msg):
         self.print_Queue.put(msg)

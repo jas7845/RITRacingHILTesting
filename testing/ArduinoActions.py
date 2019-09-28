@@ -8,10 +8,11 @@ command tuple: command and argument that gets pushed to the queue
 import datetime
 import xlwt
 import time
-
+import serial
 from collections import namedtuple
 from queue import Queue
-import serial
+from serial import Serial
+
 
 class ArduinoActions():
 
