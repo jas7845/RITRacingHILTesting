@@ -93,6 +93,7 @@ class ArduinoActions():
         file.close()
         #self.arduinoData.write('IDL'.encode('utf-8'))
 
+    # has stuff about the filter that needs to get rid of
     def formattedRead(self, timeStamp):
         get_msg = self.arduinoData.readline()
         msg_txt = (get_msg.decode("utf-8")).strip(' \t\n\r')
@@ -103,6 +104,120 @@ class ArduinoActions():
             if timeStamp:
                 msg_txt = msg_txt + "   " + datetime.datetime.fromtimestamp(time.time()).strftime('%H:%M:%S.%f') + "\n"
         return msg_txt
+
+    def exec_tests(self, filename):
+        print("Doing tests")
+        self.view.printMsg("-------------Test------------\n")
+        test_list = self.read_test_file(filename)
+        if test_list == "fnf":
+            return
+        for test in test_list:
+            if self.doSend:
+                print(self.doSend)
+                curr_test_name = test.test_name
+                if test.test_op == "send":
+                    self.send_Mult(test.test_data)
+                elif test.test_op == "check":
+                    result = self.check_responses(test.test_data, test.test_timeout)
+                    if result != "success":
+                        self.view.printMsg("Failed test: " + curr_test_name + "\n failed on: " + result + "\n")
+                    else:
+                        self.view.printMsg("Test: " + curr_test_name + " succeeded \n")
+
+    def check_responses(self, response_list, timeout):
+        got_all_messages = False
+        start_time = time.time()
+        while not got_all_messages and (time.time()-start_time) <= timeout:
+            received_msg = self.formattedRead(False).strip('|')
+            msg_to_remove = []
+            # To compare each message we need to split the ID and message into their respective
+            # hex values
+            if received_msg != "":
+                id = received_msg.split(' ')[0]
+                msg = received_msg.split(' ')[1]
+                self.view.printMsg("received: " + received_msg + "\n")
+                for i in range(len(response_list)):
+                    check_id = response_list[i].split(' ')[0]
+                    check_msg = response_list[i].split(' ')[1]
+                    msg_match = True
+                    if check_id == id:
+                        for j in range(len(msg)):
+                            if check_msg[j] != "X":
+                                if check_msg[j] != msg[j]:
+                                    msg_match = False
+                        if msg_match:
+                            msg_to_remove.append(response_list[i])
+                for i in msg_to_remove:
+                    response_list.remove(i)
+                # This line will remove a response from a list if it is in the response list
+                # response_list[:] = [checkMsg for checkMsg in response_list if not (int(checkMsg.split(' ')[0], 16) == idVal
+                #                                                                    and int(checkMsg.split(' ')[1], 16) == msgVal)]
+        if len(response_list) == 0:
+            return "success"
+        else:
+            return response_list[0]
+
+    def read_test_file(self, filename):
+        tests = []
+        try:
+            with open(filename) as test_line:
+                in_test = False
+                in_sending = False
+                in_checking = False
+                msg_to_send = []
+                msg_to_check = []
+                test_name = ""
+                timeout = 1
+                for line in test_line.readlines():
+                    split = line.strip().split(',')
+                    if len(split) > 0:
+                        if split[0][0:2] != "//":
+                            if in_test:
+                                if in_sending:
+                                    if split[0][1:len(split[0]) - 1] != "/send":
+                                        if split[0][0:3] == "SND" or split[0][0:3] == "del":
+                                            msg_to_send.append(split[0][0:24].strip())
+                                    else:
+                                        tests.append(self.test(test_name=test_name, test_op="send", test_data=msg_to_send, test_timeout=0))
+                                        msg_to_send = []
+                                        in_sending = False
+                                elif in_checking:
+                                    if split[0][1:len(split[0]) - 1] != "/check":
+                                        check = split[0][0:20]
+                                        msg_to_check.append(check)
+                                    else:
+                                        tests.append(self.test(test_name=test_name, test_op="check", test_data=msg_to_check, test_timeout=timeout))
+                                        in_checking = False
+                                        msg_to_check = []
+                                elif split[0][1:len(split[0]) - 1] == "send":
+                                    in_sending = True
+                                elif split[0][1:] == "check":
+                                    in_checking = True
+                                    timeout = float(split[1][8:len(split[1]) - 1])
+                                elif split[0][1:len(split[0]) - 1] == "/test":
+                                    in_test = False
+                                    msg_to_send = []
+                                    msg_to_check =[]
+                            else:
+                                if split[0][1:] == "test":
+                                    test_name = split[1][10:len(split[1]) - 2]
+                                    in_test = True
+            return tests
+        except:
+            self.view.printMsg("File not found \n")
+            return "fnf"
+
+    def idle(self):
+        self.view.printMsg("Idle\n")
+        self.arduinoData.write('IDL'.encode('utf-8'))
+
+    def log_loop(self):
+        self.write_arduino('LOG'.encode())
+        with open("results.txt", "w+") as file:
+            while True:
+                msg = self.formattedRead(True)
+                file.write(msg)
+                self.view.printMsg(msg.strip('\n'))
 
     #checks if the queue is empty
     #takes the  command from command touple and checks what they are

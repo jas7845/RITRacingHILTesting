@@ -18,6 +18,7 @@ int randCounter = 0;
 
 /*
 * need to change the CAN, not sure what to
+* Arduino Method in the Arduino IDE
 */
 void setup() {
   // put your setup code here, to run once:
@@ -27,6 +28,10 @@ void setup() {
   Serial.setTimeout(2);
 }
 
+/*
+* need to change the CAN, not sure what to
+* Arduino Method in the Arduino IDE
+*/
 void loop() {
   // put your main code here, to run repeatedly:
   switch(state){
