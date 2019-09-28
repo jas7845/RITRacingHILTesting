@@ -124,6 +124,8 @@ class ArduinoActions():
                     else:
                         self.view.printMsg("Test: " + curr_test_name + " succeeded \n")
 
+    # Not really sure what this si doing, should be comparing the received messages with the response
+    #   list but  im not sure how, something to do with "X" in the string
     def check_responses(self, response_list, timeout):
         got_all_messages = False
         start_time = time.time()
@@ -133,8 +135,8 @@ class ArduinoActions():
             # To compare each message we need to split the ID and message into their respective
             # hex values
             if received_msg != "":
-                id = received_msg.split(' ')[0]
-                msg = received_msg.split(' ')[1]
+                id = received_msg.split(' ')[0]     # send or check
+                msg = received_msg.split(' ')[1]    # which pin to go to
                 self.view.printMsg("received: " + received_msg + "\n")
                 for i in range(len(response_list)):
                     check_id = response_list[i].split(' ')[0]
@@ -157,6 +159,8 @@ class ArduinoActions():
         else:
             return response_list[0]
 
+    # most of this is based on the way that the file / strings are formatted - not sure how to do that
+    # what is /send vs send, /check vs check and /test vs test?
     def read_test_file(self, filename):
         tests = []
         try:
@@ -171,7 +175,7 @@ class ArduinoActions():
                 for line in test_line.readlines():
                     split = line.strip().split(',')
                     if len(split) > 0:
-                        if split[0][0:2] != "//":
+                        if split[0][0:2] != "//":  # not sure why this is here
                             if in_test:
                                 if in_sending:
                                     if split[0][1:len(split[0]) - 1] != "/send":
