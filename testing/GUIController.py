@@ -32,7 +32,38 @@ class GUIController:
         print("Set up")     # why
 
     def send_mult(self, filename):
-        self.actions.commandQueue.put(self.actions.command("sendMult", [filename]))
+        # self.actions.commandQueue.put(self.actions.command("sendMult", [filename]))
+        tests = []
+        try:
+            with open(filename) as test_line:
+                for line in test_line.readlines():
+                    message = line;
+                    toke = line.strip().split(',')
+                    if len(toke) > 0 and toke[0][0:2] != "//":
+                        if toke[0][0:3] == "SND" and self.check_msg(message):
+                            self.actions.commandQueue.put(self.actions.command("send", message))
+                        elif toke[0][0:3] == "CHK" and self.check_msg(message):
+                            self.actions.commandQueue.put(self.actions.command("check", message))
+                            # need something to carry out check function
+
+        except FileNotFoundError:
+            self.view.printMsg("File not found \n")
+            return "fnf"
+
+    def check_msg(self, message):
+        split_msg = message.split()  # separates msg where the paces are to a list of words
+        # at this point it has the message from the GUI Entry part
+        if (split_msg[0] == "CHK") or (split_msg[0] == "SET"):
+            if split_msg[1].isnumeric():
+                if (split_msg[2] == "0") or (split_msg[2] == "1"):
+                    return True;
+                else:  # not 0 or 1 setting
+                    self.GUI_view.printMsg("MSG is invalid, message must be 0 or 1")
+            else:  # not valid pin number
+                self.GUI_view.printMsg("MSG is invalid, pin must be a number")
+        else:  # not valid Set or CHK
+            self.GUI_view.printMsg("ID is invalid, must be SET or CHK")
+        return False;
 
     def exec_tests(self, filename):
         self.actions.commandQueue.put(self.actions.command("execTests", [filename]))
@@ -40,23 +71,17 @@ class GUIController:
     def end(self):
         self.actions.threadActive = False
 
+    # checks if message formatted like a test and sends it
+    # else checks if a file, run through file and send each send message and record each check message
     # formats the entry message, pushes a command to a queue in actions for test
     def send(self, msg):
         message = msg
-        if os.msg.isfile(msg):  # check to see if the message is a file
-            f.open(msg, "r")    # open the file and add each test to
-        split_msg = msg.split()         # separates msg where the paces are to a list of words
+        if self.check_msg(msg):
+            self.actions.commandQueue.put(self.actions.command("send", message))
+        elif os.msg.isfile(msg):  # check to see if the message is a file
+            self.send_mult(msg)
         # at this point it has the message from the GUI Entry part
-        if (split_msg[0] == "CHK") or (split_msg[0] == "SET"):
-            if split_msg[1].isnumeric():
-                if(split_msg[2] == "0") or (split_msg[2] == "1"):
-                    self.actions.commandQueue.put(self.actions.command("send", message))
-                else:  # not 0 or 1 setting
-                    self.GUI_view.printMsg("MSG is invalid, message must be 0 or 1")
-            else:  # not valid pin number
-                self.GUI_view.printMsg("MSG is invalid, pin must be a number")
-        else:   # not valid Set or CHK
-            self.GUI_view.printMsg("ID is invalid, must be SET or CHK")
+
 
     def cancel_log(self):
         self.actions.commandQueue.put(self.actions.command("getCancel", []))
