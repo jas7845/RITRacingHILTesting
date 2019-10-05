@@ -4,6 +4,7 @@ from testing.GUIView import GUIView
 from testing.CommandLineView import CommandLine
 import sys
 import threading
+import os
 import time
 
 #  he imports other classes that i have not made yet, not sure if i need to do that
@@ -12,6 +13,7 @@ import time
 class GUIController:
     actions = None
     GUI_view = None
+    logging = False;
 
     def __init__(self, master):
         if sys.argv[1] == "gui":
@@ -29,23 +31,29 @@ class GUIController:
             self.periodic_call()
         print("Set up")     # why
 
+    def send_mult(self, filename):
+        self.actions.commandQueue.put(self.actions.command("sendMult", [filename]))
+
     def exec_tests(self, filename):
         self.actions.commandQueue.put(self.actions.command("execTests", [filename]))
 
     def end(self):
         self.actions.threadActive = False
 
-    # formats the  message, pushes a command to a queue in actions for test
+    # formats the entry message, pushes a command to a queue in actions for test
     def send(self, msg):
         message = msg
+        if os.msg.isfile(msg):  # check to see if the message is a file
+            f.open(msg, "r")    # open the file and add each test to
         split_msg = msg.split()         # separates msg where the paces are to a list of words
+        # at this point it has the message from the GUI Entry part
         if (split_msg[0] == "CHK") or (split_msg[0] == "SET"):
             if split_msg[1].isnumeric():
                 if(split_msg[2] == "0") or (split_msg[2] == "1"):
                     self.actions.commandQueue.put(self.actions.command("send", message))
-                else:  # not 0  or 1 setting
+                else:  # not 0 or 1 setting
                     self.GUI_view.printMsg("MSG is invalid, message must be 0 or 1")
-            else:  #not  valid pin number
+            else:  # not valid pin number
                 self.GUI_view.printMsg("MSG is invalid, pin must be a number")
         else:   # not valid Set or CHK
             self.GUI_view.printMsg("ID is invalid, must be SET or CHK")
@@ -60,9 +68,14 @@ class GUIController:
         inputCommand = self.actions.command("getN", [n])
         self.actions.commandQueue.put(inputCommand)
 
-    # logs the command ind tha background, pushes it to queue
+    # logs the command in the background, pushes it to queue
     def log(self):
-        self.actions.commandQueue.put(self.actions.command("getBackground", [True]))
+        if self.logging:  # if logging then stop
+            self.actions.commandQueue.put(self.actions.command("getCancel", []))
+            self.logging = False;
+        else:
+            self.actions.commandQueue.put(self.actions.command("getBackground", [True]))
+            self.logging = True;
 
     def idle(self):
         self.actions.idle()

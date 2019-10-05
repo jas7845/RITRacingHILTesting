@@ -61,7 +61,7 @@ class ArduinoActions():
     def read_multiple(self, filename):
         with open(filename) as file:
             self.send_Mult(file.readlines())  # readlines returns a list of lines
-        filename.close()    #I added this to his?
+        filename.close()    # I added this to his?
 
     # writes the message to a file "results.txt"
     def get(self, msgNum):
@@ -74,7 +74,6 @@ class ArduinoActions():
                 f.write(get_msg)
         self.arduinoData.write('IDL'.encode('utf-8'))
         f.close()
-
 
     # continuously loop and read messages until you stop logging (bool set to false)
     # write the results to "results.txt"
@@ -109,7 +108,7 @@ class ArduinoActions():
     def exec_tests(self, filename):
         print("Doing tests")
         self.view.printMsg("-------------Test------------\n")
-        test_list = self.read_test_file(filename)
+        test_list = self.read_test_file(filename)  # returns a list of tests
         if test_list == "fnf":  # file not found
             return
         for test in test_list:
@@ -126,7 +125,7 @@ class ArduinoActions():
                         self.view.printMsg("Test: " + curr_test_name + " succeeded \n")
 
     # Not really sure what this is doing, should be comparing the received messages with the response
-    #   list but  im not sure how, something to do with "X" in the string
+    #    list but  im not sure how, something to do with "X" in the string
     def check_responses(self, response_list, timeout):
         got_all_messages = False
         start_time = time.time()
@@ -161,7 +160,8 @@ class ArduinoActions():
             return response_list[0]
 
     # most of this is based on the way that the file / strings are formatted - not sure how to do that
-    # what is /send vs send, /check vs check and /test vs test?
+    # what is /send vs send, /check vs check and /test vs test -> the way that the file is formatted
+    # reads the file and returns a list of tests
     def read_test_file(self, filename):
         tests = []
         try:
@@ -174,38 +174,38 @@ class ArduinoActions():
                 test_name = ""
                 timeout = 1
                 for line in test_line.readlines():
-                    split = line.strip().split(',')
-                    if len(split) > 0:
-                        if split[0][0:2] != "//":  # not sure why this is here
+                    toke = line.strip().split(',')
+                    if len(toke) > 0:
+                        if toke[0][0:2] != "//":  # not sure why this is here
                             if in_test:
                                 if in_sending:
-                                    if split[0][1:len(split[0]) - 1] != "/send":
-                                        if split[0][0:3] == "SND" or split[0][0:3] == "del":
-                                            msg_to_send.append(split[0][0:24].strip())
+                                    if toke[0][1:len(toke[0]) - 1] != "/send":
+                                        if toke[0][0:3] == "SND" or toke[0][0:3] == "del":
+                                            msg_to_send.append(toke[0][0:24].strip())  # not sure why the split is at 24
                                     else:
                                         tests.append(self.test(test_name=test_name, test_op="send", test_data=msg_to_send, test_timeout=0))
                                         msg_to_send = []
                                         in_sending = False
                                 elif in_checking:
-                                    if split[0][1:len(split[0]) - 1] != "/check":
-                                        check = split[0][0:20]
+                                    if toke[0][1:len(toke[0]) - 1] != "/check":
+                                        check = toke[0][0:20]
                                         msg_to_check.append(check)
                                     else:
                                         tests.append(self.test(test_name=test_name, test_op="check", test_data=msg_to_check, test_timeout=timeout))
                                         in_checking = False
                                         msg_to_check = []
-                                elif split[0][1:len(split[0]) - 1] == "send":
+                                elif toke[0][1:len(toke[0]) - 1] == "send":
                                     in_sending = True
-                                elif split[0][1:] == "check":
+                                elif toke[0][1:] == "check":
                                     in_checking = True
-                                    timeout = float(split[1][8:len(split[1]) - 1])
-                                elif split[0][1:len(split[0]) - 1] == "/test":
+                                    timeout = float(toke[1][8:len(toke[1]) - 1])
+                                elif toke[0][1:len(toke[0]) - 1] == "/test":
                                     in_test = False
                                     msg_to_send = []
                                     msg_to_check =[]
                             else:
-                                if split[0][1:] == "test":
-                                    test_name = split[1][10:len(split[1]) - 2]
+                                if toke[0][1:] == "test":
+                                    test_name = toke[1][10:len(toke[1]) - 2]
                                     in_test = True
             return tests
         except:
@@ -224,15 +224,15 @@ class ArduinoActions():
                 file.write(msg)
                 self.view.printMsg(msg.strip('\n'))
 
-    #checks if the queue is empty
-    #takes the  command from command touple and checks what they are
-    #send command calls send  in actions for test which actually sends the message
+    # checks if the queue is empty
+    # takes the  command from command touple and checks what they are
+    # send command calls send  in actions for test which actually sends the message
     @property
     def handleCommands(self):
         if not self.commandQueue.empty():
             sent_command = self.commandQueue.get()
             if sent_command.cmd == "getN":
-                self.get(sent_command.args[0])
+                self.get(sent_command.args[0])          # writes data to results.txt file
             elif sent_command.cmd == "send":            # is a button on gui
                 self.send(sent_command.args[0])
             elif sent_command.cmd == "sendMult":        # is a button on gui i got rid of this one b/c file loop?
@@ -257,6 +257,5 @@ class ArduinoActions():
         self.arduinoData = serial.Serial(self.arduino_com, self.baudrate, timeout=0.5)
         self.threadActive = True
         while self.threadActive:
-            self.handleCommands  #infinite loop to keeps running commands
-
+            self.handleCommands  # infinite loop to keeps running commands
 
