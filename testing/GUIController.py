@@ -33,7 +33,6 @@ class GUIController:
 
     def send_mult(self, filename):
         # self.actions.commandQueue.put(self.actions.command("sendMult", [filename]))
-        tests = []
         try:
             with open(filename) as test_line:
                 for line in test_line.readlines():

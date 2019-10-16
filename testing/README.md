@@ -18,7 +18,7 @@ SET/CHK pin number and on/off
 
 Example:
 
-    // FILE NAME
+    // FILE NAME AND INFO
     // will test XXXX
     SET 03 0 
     CHK 03 0

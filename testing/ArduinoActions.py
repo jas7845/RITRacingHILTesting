@@ -229,6 +229,7 @@ class ArduinoActions():
     # send command calls send  in actions for test which actually sends the message
     @property
     def handleCommands(self):
+        # TODO: edit execTests and send and sendMult to comply w new controller
         if not self.commandQueue.empty():
             sent_command = self.commandQueue.get()
             if sent_command.cmd == "getN":
