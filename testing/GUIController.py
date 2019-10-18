@@ -38,7 +38,7 @@ class GUIController:
                 for line in test_line.readlines():
                     message = line;
                     toke = line.strip().split(',')
-                    if len(toke) > 0 and toke[0][0:2] != "//":
+                    if len(toke) > 0 and toke[0][0:2] != "//":          # check if it is a comment
                         if toke[0][0:3] == "SND" and self.check_msg(message):
                             self.actions.commandQueue.put(self.actions.command("send", message))
                         elif toke[0][0:3] == "CHK" and self.check_msg(message):

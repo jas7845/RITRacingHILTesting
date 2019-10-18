@@ -227,6 +227,7 @@ class ArduinoActions():
     # checks if the queue is empty
     # takes the  command from command touple and checks what they are
     # send command calls send  in actions for test which actually sends the message
+    # ISN'T THE ONLY  COMMAND SET OR CHECK? why are there others -> need to compare how he did it to how I should do it
     @property
     def handleCommands(self):
         # TODO: edit execTests and send and sendMult to comply w new controller

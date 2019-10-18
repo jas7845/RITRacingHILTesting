@@ -52,13 +52,16 @@ class CommandLine:
             elif direction[0] == "IDLE":
                 self.controller.idle()
             elif direction[0] == "help":
-                print("SND [ID] [MSG] will send a message over the CAN bus")
+                print("SND [PORT] [0/1] will send a message over the CAN bus")
                 print("SND -m [filename] will send a list of commands located in a specific file")
                 print("GET [N] will log the next N received messages on the screen and output to a text file")
                 print("GET -b will log all messages to a text file in the background")
                 print("GET -c will cancel a background log")
                 print("LOG will continuously log messages. Not recommended because you cant leave this mode")
+                # confused between get and check functions, they  are different, is GET only for the
+                #   command line / gui? but then what is check
 
+    # why is this method even here
     def handle_print(self):
         print("Nothing")
 
