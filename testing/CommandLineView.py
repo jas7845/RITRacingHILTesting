@@ -52,7 +52,7 @@ class CommandLine:
             elif direction[0] == "IDLE":
                 self.controller.idle()
             elif direction[0] == "help":
-                print("SND [PORT] [0/1] will send a message over the CAN bus")
+                print("SND [PORT] [0/1] will send a message")
                 print("SND -m [filename] will send a list of commands located in a specific file")
                 print("GET [N] will log the next N received messages on the screen and output to a text file")
                 print("GET -b will log all messages to a text file in the background")

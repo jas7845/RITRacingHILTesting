@@ -4,6 +4,7 @@ from testing.GUIView import GUIView
 from testing.CommandLineView import CommandLine
 import sys
 import threading
+import string
 import os
 import time
 
@@ -26,11 +27,14 @@ class GUIController:
         readThread.start()
         if sys.argv[1] == "cmd":
             self.GUI_view.run()
-
         if sys.argv[1] == "gui":
             self.periodic_call()
-        print("Set up")     # why
+        print("Set up")
 
+    '''
+    send_mult: reads a file to get the commands and adds them to the actions command queue
+    :parameter filename: the file to read
+    '''
     def send_mult(self, filename):
         # self.actions.commandQueue.put(self.actions.command("sendMult", [filename]))
         try:
@@ -43,12 +47,19 @@ class GUIController:
                             self.actions.commandQueue.put(self.actions.command("send", message))
                         elif toke[0][0:3] == "CHK" and self.check_msg(message):
                             self.actions.commandQueue.put(self.actions.command("check", message))
+                        elif toke[0][0:3] == "SET" and self.check_msg(message):
+                            self.actions.commandQueue.put(self.actions.command("set", message))
                             # need something to carry out check function
 
         except FileNotFoundError:
             self.view.printMsg("File not found \n")
             return "fnf"
 
+    '''
+    check_msg: checks to see if a message is properly formatted
+    :parameter message: the message to check
+    :returns true if the message is formatted correctly, false if it is not
+    '''
     def check_msg(self, message):
         split_msg = message.split()  # separates msg where the paces are to a list of words
         # at this point it has the message from the GUI Entry part
@@ -60,27 +71,48 @@ class GUIController:
                     self.GUI_view.printMsg("MSG is invalid, message must be 0 or 1")
             else:  # not valid pin number
                 self.GUI_view.printMsg("MSG is invalid, pin must be a number")
-        else:  # not valid Set or CHK
-            self.GUI_view.printMsg("ID is invalid, must be SET or CHK")
+        elif split_msg[0] == "SND":
+            if len(split_msg[1]) == 16 and all(c in string.hexdigits for c in split_msg[1]):
+                return True;
+            else: self.GUI_view.printMsg("Message of invalid length ")
+        else:  # not valid SET or CHK
+            self.GUI_view.printMsg("ID is invalid, must SET a pin, SND a CAN message, or CHK a message")
         return False;
 
+    # not really sure what this does, isnt the send mult doing this?
     def exec_tests(self, filename):
         self.actions.commandQueue.put(self.actions.command("execTests", [filename]))
 
+    '''
+    end: ends the testing period by shutting down the threads
+    '''
     def end(self):
         self.actions.threadActive = False
 
     # checks if message formatted like a test and sends it
     # else checks if a file, run through file and send each send message and record each check message
     # formats the entry message, pushes a command to a queue in actions for test
-    def send(self, msg):
-        message = msg
-        if self.check_msg(msg):
+    def send(self, message):
+        print("send method GUI Controller")
+        msg = message.strip()
+        print("." + msg[0:3] + ".")
+        if msg[0:3] == "SND":  # and self.check_msg(msg):
+            print("valid")
             self.actions.commandQueue.put(self.actions.command("send", message))
-        elif os.msg.isfile(msg):  # check to see if the message is a file
-            self.send_mult(msg)
+        elif msg[0:3] == "CHK":  #and self.check_msg(message):
+            print("valid")
+            self.actions.commandQueue.put(self.actions.command("check", message))
+        elif msg[0:3] == "SET":  # and self.check_msg(message):
+            print("valid")
+            self.actions.commandQueue.put(self.actions.command("set", message))
+        else:
+            try:
+                f = open(msg)
+                f.close()
+                self.send_mult(msg)
+            except FileNotFoundError:
+                print('File does not exist')
         # at this point it has the message from the GUI Entry part
-
 
     def cancel_log(self):
         self.actions.commandQueue.put(self.actions.command("getCancel", []))

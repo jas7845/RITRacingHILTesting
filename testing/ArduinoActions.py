@@ -33,8 +33,9 @@ class ArduinoActions():
     filters = []
 
     def __init__(self, arudino_com, baudrate, view):
-        self.arduino_com = arudino_com
-        self.baudrate = baudrate
+        #self.arduino_com = arudino_com
+        #self.baudrate = baudrate
+        # changed so that i can try to run it and see if it works
         self.view = view
 
     # sends message to the arduiono
@@ -42,6 +43,17 @@ class ArduinoActions():
         self.view.printMsg("Sent: " + msg + "\n")
         self.write_arduino((msg.strip('\n')).encode('utf-8'))
 
+    def set(self, msg):
+        self.view.printMsg("Set Sent: " + msg + "\n")
+        self.write_arduino((msg.strip('\n')).encode('utf-8'))
+
+    def check(self, msg, timeout):
+        self.view.printMsg("Checking: " + msg + "\n")
+        result = self.check_responses(msg, timeout)
+        if result != "success":
+            self.view.printMsg("Failed test: " + msg + "\n failed on: " + result + "\n")
+        else:
+            self.view.printMsg("Test: " + msg + " succeeded \n")
 
     def write_arduino(self, msg):
         self.arduinoData.write(msg)
@@ -118,6 +130,7 @@ class ArduinoActions():
                 if test.test_op == "send":
                     self.send_Mult(test.test_data)
                 elif test.test_op == "check":
+                    # check responses takes a response list and timeout
                     result = self.check_responses(test.test_data, test.test_timeout)
                     if result != "success":
                         self.view.printMsg("Failed test: " + curr_test_name + "\n failed on: " + result + "\n")
@@ -132,8 +145,7 @@ class ArduinoActions():
         while not got_all_messages and (time.time()-start_time) <= timeout:
             received_msg = self.formattedRead(False).strip('|')
             msg_to_remove = []
-            # To compare each message we need to split the ID and message into their respective
-            # hex values
+            # To compare each message we need to split the ID and message into their respective hex values
             if received_msg != "":
                 id = received_msg.split(' ')[0]     # send or check
                 msg = received_msg.split(' ')[1]    # which pin to go to
@@ -176,7 +188,7 @@ class ArduinoActions():
                 for line in test_line.readlines():
                     toke = line.strip().split(',')
                     if len(toke) > 0:
-                        if toke[0][0:2] != "//":  # not sure why this is here
+                        if toke[0][0:2] != "//":  # is a comment in the file
                             if in_test:
                                 if in_sending:
                                     if toke[0][1:len(toke[0]) - 1] != "/send":
@@ -237,26 +249,33 @@ class ArduinoActions():
                 self.get(sent_command.args[0])          # writes data to results.txt file
             elif sent_command.cmd == "send":            # is a button on gui
                 self.send(sent_command.args[0])
-            elif sent_command.cmd == "sendMult":        # is a button on gui i got rid of this one b/c file loop?
-                self.doSend = True
-                self.send_multiple(sent_command.args[0])
+            elif sent_command.cmd == "set":
+                self.set(sent_command.args[0])
+            elif sent_command.cmd == "check":
+                self.check(sent_command.args[0])
             elif sent_command.cmd == "getCancel":
                 self.doInfiniteLog = False
             elif sent_command.cmd == "getAll":          # am not using
                 self.get(-1)
             elif sent_command.cmd == "getBackground":   # button log data logs it in the background, specifies where to log in the background
-                if not self.doInfiniteLog:              # function will passively log in the background
-                    self.infiniteLog(sent_command.args[0])
+                if not self.doInfiniteLog:
+                    self.infiniteLog(sent_command.args[0])# function will passively log in the background
+            elif sent_command.cmd == "cancelSend":  # is a button on gui
+                self.doSend = False
+            # do not think i need these two:
+            """elif sent_command.cmd == "sendMult":        # is a button on gui i got rid of this one b/c file loop?
+                self.doSend = True
+                self.send_multiple(sent_command.args[0])
             elif sent_command.cmd == "execTests":       # is a button on gui
                 self.doSend= True
-                self.exec_tests(sent_command.args[0])   # what is exec tests vs send? i guess send has lessfunctionality
-            elif sent_command.cmd == "cancelSend":      # is a button on gui
-                self.doSend=False
+                self.exec_tests(sent_command.args[0])   # what is exec tests v send? i guess send has less functionality
+            """
             return True
-        return False
+        else:
+            return False
 
     def run(self):
-        self.arduinoData = serial.Serial(self.arduino_com, self.baudrate, timeout=0.5)
+        #self.arduinoData = serial.Serial(self.arduino_com, self.baudrate, timeout=0.5)
         self.threadActive = True
         while self.threadActive:
             self.handleCommands  # infinite loop to keeps running commands
