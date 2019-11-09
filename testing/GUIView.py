@@ -1,6 +1,7 @@
 from tkinter import *  # finicky to use
 from tkinter import ttk
 from tkinter import messagebox
+import logging
 
 
 from queue import Queue
@@ -75,11 +76,20 @@ class GUIView:
         while self.print_Queue.qsize():
             try:
                 msg = self.print_Queue.get()
+                '''
+                # Create and configure logger
+                logging.basicConfig(filename="newfile.log", format='%(asctime)s %(message)s', filemode='w')
+                # Creating an object
+                self.logger = logging.getLogger()
+                self.logger.info(self, msg)
+
+                '''
                 self.logger.config(state=NORMAL)
                 self.logger.insert(END, msg)
                 self.logger.see(END)
                 self.logger.config(state=DISABLED)
-            except Queue.empty():
+
+            except Queue.empty():  # added self as an extra agrument because it told me to
                 pass
 
     def printMsg(self, msg):

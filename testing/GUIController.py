@@ -41,8 +41,8 @@ class GUIController:
             with open(filename) as test_line:
                 for line in test_line.readlines():
                     message = line;
-                    toke = line.strip().split(',')
-                    if len(toke) > 0 and toke[0][0:2] != "//":          # check if it is a comment
+                    # toke = line.strip().split(',')
+                    '''if len(toke) > 0 and toke[0][0:2] != "//":          # check if it is a comment
                         if toke[0][0:3] == "SND" and self.check_msg(message):
                             self.actions.commandQueue.put(self.actions.command("send", message))
                         elif toke[0][0:3] == "CHK" and self.check_msg(message):
@@ -50,6 +50,8 @@ class GUIController:
                         elif toke[0][0:3] == "SET" and self.check_msg(message):
                             self.actions.commandQueue.put(self.actions.command("set", message))
                             # need something to carry out check function
+                            '''
+                    self.send(message)
 
         except FileNotFoundError:
             self.view.printMsg("File not found \n")
@@ -68,13 +70,13 @@ class GUIController:
                 if (split_msg[2] == "0") or (split_msg[2] == "1"):
                     return True;
                 else:  # not 0 or 1 setting
-                    self.GUI_view.printMsg("MSG is invalid, message must be 0 or 1")
+                    self.GUI_view.printMsg("MSG  SET/CHK is invalid, message must be 0 or 1")
             else:  # not valid pin number
-                self.GUI_view.printMsg("MSG is invalid, pin must be a number")
+                self.GUI_view.printMsg("MSG SET/CHK is invalid, pin must be a number")
         elif split_msg[0] == "SND":
             if len(split_msg[1]) == 16 and all(c in string.hexdigits for c in split_msg[1]):
                 return True;
-            else: self.GUI_view.printMsg("Message of invalid length ")
+            else: self.GUI_view.printMsg("Message SND of invalid length ")
         else:  # not valid SET or CHK
             self.GUI_view.printMsg("ID is invalid, must SET a pin, SND a CAN message, or CHK a message")
         return False;
@@ -93,13 +95,12 @@ class GUIController:
     # else checks if a file, run through file and send each send message and record each check message
     # formats the entry message, pushes a command to a queue in actions for test
     def send(self, message):
-        print("send method GUI Controller")
         msg = message.strip()
-        print("." + msg[0:3] + ".")
+        print("send method GUI Controller: ." + msg[0:3] + ".")
         if msg[0:3] == "SND":  # and self.check_msg(msg):
             print("valid")
             self.actions.commandQueue.put(self.actions.command("send", message))
-        elif msg[0:3] == "CHK":  #and self.check_msg(message):
+        elif msg[0:3] == "CHK":  # and self.check_msg(message):
             print("valid")
             self.actions.commandQueue.put(self.actions.command("check", message))
         elif msg[0:3] == "SET":  # and self.check_msg(message):
@@ -148,4 +149,6 @@ class GUIController:
 master = Tk()
 controller = GUIController(master)
 if sys.argv[1] == "gui":
+    master.mainloop()
+elif sys.argv[1] == "cmd":
     master.mainloop()

@@ -10,7 +10,7 @@ import xlwt
 import time
 import serial
 from collections import namedtuple
-from queue import Queue
+import queue
 from serial import Serial
 
 
@@ -21,7 +21,7 @@ class ArduinoActions():
     doInfiniteLog = False
     doSend = False
     threadActive = False
-    commandQueue = Queue()  # queue that contains the commands
+    commandQueue = queue.Queue(100)  # queue that contains the commands
     command = namedtuple('command', 'cmd args')
     arduino_com = None
     baudrate = None
@@ -40,14 +40,17 @@ class ArduinoActions():
 
     # sends message to the arduiono
     def send(self, msg):
+        print("send in AA" + msg)
         self.view.printMsg("Sent: " + msg + "\n")
-        self.write_arduino((msg.strip('\n')).encode('utf-8'))
+        #self.write_arduino((msg.strip('\n')).encode('utf-8'))
 
     def set(self, msg):
+        print("set in AA" +msg)
         self.view.printMsg("Set Sent: " + msg + "\n")
-        self.write_arduino((msg.strip('\n')).encode('utf-8'))
+        #self.write_arduino((msg.strip('\n')).encode('utf-8'))
 
     def check(self, msg, timeout):
+        print("check in AA" + msg)
         self.view.printMsg("Checking: " + msg + "\n")
         result = self.check_responses(msg, timeout)
         if result != "success":
@@ -56,7 +59,8 @@ class ArduinoActions():
             self.view.printMsg("Test: " + msg + " succeeded \n")
 
     def write_arduino(self, msg):
-        self.arduinoData.write(msg)
+        a = "abc"
+        # self.arduinoData.write(msg)
 
     # sends the message in the lines using send function
     def send_mult(self, msgs):
@@ -77,14 +81,14 @@ class ArduinoActions():
 
     # writes the message to a file "results.txt"
     def get(self, msgNum):
-        self.arduinoData.write('LOG'.encode('utf-8'))
+        # self.arduinoData.write('LOG'.encode('utf-8'))
         f = open("results.txt",  "w+")
         for i in range(int(msgNum)):
             get_msg = self.formattedRead(True)
             if get_msg != '':
                 self.view.printMsg(get_msg.strip('\n'))
                 f.write(get_msg)
-        self.arduinoData.write('IDL'.encode('utf-8'))
+        # self.arduinoData.write('IDL'.encode('utf-8'))
         f.close()
 
     # continuously loop and read messages until you stop logging (bool set to false)
@@ -92,22 +96,27 @@ class ArduinoActions():
     def infiniteLog(self, doPrint):
         self.doInfiniteLog = True
         file = open("results.txt", "a")
-        self.arduinoData.write('LOG'.encode('utf-8'))
+        # self.arduinoData.write('LOG'.encode('utf-8'))
         while self.doInfiniteLog:
             get_msg = self.formattedRead(True)
             if get_msg != "":
                 file.write(get_msg)
                 if doPrint:
                     self.view.printMsg(get_msg)
-            self.handleCommands  #call handle command so it will go back to handle command
+            self.handleCommands  # call handle command so it will go back to handle command
         file.close()
         #self.arduinoData.write('IDL'.encode('utf-8'))
 
     # has stuff about the filter that needs to get rid of
     # Think this is getting data from the arduino and formatting it
     def formattedRead(self, timeStamp):
-        get_msg = self.arduinoData.readline()
-        msg_txt = (get_msg.decode("utf-8")).strip(' \t\n\r')
+        # commented out for testing :
+        # get_msg = self.arduinoData.readline()
+        # msg_txt = (get_msg.decode("utf-8")).strip(' \t\n\r')
+        get_msg = self.commandQueue.get()
+        self.commandQueue.put(get_msg)
+        msg_txt = get_msg.cmd
+
         # if self.filter_active and not self.filter_text(msg_txt):
         #    return ""
         if msg_txt != "":
@@ -245,6 +254,13 @@ class ArduinoActions():
         # TODO: edit execTests and send and sendMult to comply w new controller
         if not self.commandQueue.empty():
             sent_command = self.commandQueue.get()
+
+            if type(sent_command) is str:
+                print("type string: " + sent_command)
+                return False
+            else:
+                print(sent_command)
+
             if sent_command.cmd == "getN":
                 self.get(sent_command.args[0])          # writes data to results.txt file
             elif sent_command.cmd == "send":            # is a button on gui
@@ -252,7 +268,7 @@ class ArduinoActions():
             elif sent_command.cmd == "set":
                 self.set(sent_command.args[0])
             elif sent_command.cmd == "check":
-                self.check(sent_command.args[0])
+                self.check(sent_command.args[0], 2)
             elif sent_command.cmd == "getCancel":
                 self.doInfiniteLog = False
             elif sent_command.cmd == "getAll":          # am not using
@@ -278,5 +294,5 @@ class ArduinoActions():
         #self.arduinoData = serial.Serial(self.arduino_com, self.baudrate, timeout=0.5)
         self.threadActive = True
         while self.threadActive:
-            self.handleCommands  # infinite loop to keeps running commands
+            self.handleCommands  # infinite loop to keep running commands
 
