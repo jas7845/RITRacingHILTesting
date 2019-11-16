@@ -7,6 +7,8 @@ import threading
 import string
 import os
 import time
+import os.path
+from os import path
 
 #  he imports other classes that i have not made yet, not sure if i need to do that
 
@@ -62,24 +64,26 @@ class GUIController:
     :parameter message: the message to check
     :returns true if the message is formatted correctly, false if it is not
     '''
-    def check_msg(self, message):
+    def validate_command(self, message):
         split_msg = message.split()  # separates msg where the paces are to a list of words
         # at this point it has the message from the GUI Entry part
         if (split_msg[0] == "CHK") or (split_msg[0] == "SET"):
             if split_msg[1].isnumeric():
                 if (split_msg[2] == "0") or (split_msg[2] == "1"):
-                    return True;
+                    return True
                 else:  # not 0 or 1 setting
                     self.GUI_view.printMsg("MSG  SET/CHK is invalid, message must be 0 or 1")
             else:  # not valid pin number
                 self.GUI_view.printMsg("MSG SET/CHK is invalid, pin must be a number")
         elif split_msg[0] == "SND":
             if len(split_msg[1]) == 16 and all(c in string.hexdigits for c in split_msg[1]):
-                return True;
+                return True
             else: self.GUI_view.printMsg("Message SND of invalid length ")
+        elif path.exists(split_msg[0]):
+            return True
         else:  # not valid SET or CHK
             self.GUI_view.printMsg("ID is invalid, must SET a pin, SND a CAN message, or CHK a message")
-        return False;
+        return False
 
     # not really sure what this does, isnt the send mult doing this?
     def exec_tests(self, filename):

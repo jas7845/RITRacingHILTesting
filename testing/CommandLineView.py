@@ -1,6 +1,8 @@
 """
 Will do everything through the command line rather than GUI
 """
+import os.path
+from os import path
 
 
 class CommandLine:
@@ -19,21 +21,10 @@ class CommandLine:
         while 1:
             print("Welcome to HIL tester. Type help to see a list of commands.")
             request = input(">")
-            #self.actions.send(request)
             direction = request.split(" ")
-            if direction[0] == "SND":
-                if(len(direction) == 3):            # there are three elements/ commands
-                    if direction[1] == "-m":
-                        #print("Gonna send mult")
-                        self.controller.send_mult(direction[2])
-                        # self.actions.send_Mult(direction[2])
-                    elif len(direction[2]) == 16:  # this wont be the right format (SND pin volt)
-                        self.controller.send(direction[1] + " " + direction[2])
-                        # self.actions.send(request)
-                    else:
-                        print("Not valid message. Try again")
-                else:
-                    print("Not valid message. Try again")
+
+            if self.controller.validate_command(request):
+                self.controller.send(request)
             elif direction[0] == "GET":
                 if len(direction) == 2:
                     if direction[1] == "-b":
@@ -52,8 +43,9 @@ class CommandLine:
             elif direction[0] == "IDLE":
                 self.controller.idle()
             elif direction[0] == "help":
-                print("SND [PORT] [0/1] will send a message")
-                print("SND -m [filename] will send a list of commands located in a specific file")
+                print("SET/CHK [PORT] [0/1] will set a pin or check a pin")
+                print("SND [PORT] [16 diget hex number] will end a CAN message")
+                print("[filename] will send a list of commands located in a specific file")
                 print("GET [N] will log the next N received messages on the screen and output to a text file")
                 print("GET -b will log all messages to a text file in the background")
                 print("GET -c will cancel a background log")

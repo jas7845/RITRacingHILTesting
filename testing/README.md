@@ -22,8 +22,9 @@ Example:
     // will test XXXX
     SET 03 0 
     CHK 03 0
+    SND 03 0000000000000000
 
 ## Test format:
-     SND/CHK + pin number + 0/1
+     SND/SET/CHK + pin number + 16-digit hex num/0/1
     
 
