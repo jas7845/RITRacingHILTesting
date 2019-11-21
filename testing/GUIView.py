@@ -62,6 +62,7 @@ class GUIView:
         master.iconbitmap('rit2.ico')
 
         logger_frame = ttk.Frame(master)  # master was ttk
+        logger_frame.pack(side= LEFT)
         test_frame = ttk.Frame(master)
         log_butt_frame = ttk.Frame(master)
         logger_frame.grid(row=2, column=0, rowspan=12, columnspan=1)
