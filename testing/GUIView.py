@@ -74,12 +74,15 @@ class GUIView:
 
         #  creating the elements in the gui
         log_label = Label(logger_frame, text="Log:")
-        log_text = Text(logger_frame, height=15, width=15)
-        log_text.config(state=DISABLED)  # disables the ability to type into it
+        self.log_text = Text(logger_frame, height=15, width=40)
+        self.log_text.config(state=DISABLED)  # disables the ability to type into it
+        scrollbar = Scrollbar(logger_frame)
+        self.log_text.config(yscrollcommand=scrollbar.set)
+        scrollbar.config(command=self.log_text.yview)
 
         entry_label = Label(test_frame, text="File Name or Message")
         entry1 = Entry(test_frame, width=16, textvariable=msg)
-        enter_button = Button(test_frame, text="Send", command=lambda: self.send_data(id, msg, log_text))
+        enter_button = Button(test_frame, text="Send", command=lambda: self.send_data(id, msg, self.log_text))
 
         act_label = Label(log_butt_frame, text="Actions")
         log_button = Button(log_butt_frame, text="Log Data", command=self.log_data)
@@ -93,7 +96,7 @@ class GUIView:
         #  adding things to row two
         log_button.grid(row=2, column=2, pady=3)
         entry1.grid(row=2, column=1, pady=2, stick=(W, E))
-        log_text.grid(row=2, column=1, rowspan=5)
+        self.log_text.grid(row=2, column=1, rowspan=5)
 
         end_button.grid(row=3, column=2, pady=12, columnspan=1)
         enter_button.grid(row=3, column=1, pady=3)
@@ -112,11 +115,10 @@ class GUIView:
     def send_data(self, id, msg, logger):
         snd_msg = id.get() + " " + msg.get().strip()
         if self.controller.validate_command(snd_msg):
-            logger.insert(INSERT, "msg was sent")
+            self.printMsg("msg was sent")
             self.controller.send(snd_msg)
             return True
-        logger.insert(INSERT, "msg was not sent")
-        print(snd_msg + " was not sent")
+        self.printMsg(snd_msg + " was not sent")
         return False
 
     def on_closing(self):
@@ -128,14 +130,11 @@ class GUIView:
         while self.print_Queue.qsize():
             try:
                 msg = self.print_Queue.get()
-
-                # Create and configure logger
-                logging.basicConfig(filename="newfile.log", format='%(asctime)s %(message)s', filemode='w')
-                # Creating an object
-                self.logger = logging.getLogger()
-                self.logger.info(self, msg)
-
-            except Queue.empty():  # added self as an extra agrument because it told me to
+                self.log_text.config(state=NORMAL)
+                self.log_text.insert(END, msg)
+                self.log_text.see(END)
+                self.log_text.config(state=DISABLED)
+            except Queue.empty():
                 pass
 
     def printMsg(self, msg):

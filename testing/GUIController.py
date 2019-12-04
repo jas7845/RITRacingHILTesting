@@ -100,23 +100,25 @@ class GUIController:
     # formats the entry message, pushes a command to a queue in actions for test
     def send(self, message):
         msg = message.strip()
-        print("send method GUI Controller: ." + msg[0:3] + ".")
+        # print("send method GUI Controller: ." + msg[0:3] + ".")
         if msg[0:3] == "SND":  # and self.check_msg(msg):
-            print("valid")
+            self.GUI_view.printMsg("Valid message: " + message)
             self.actions.commandQueue.put(self.actions.command("send", message))
         elif msg[0:3] == "CHK":  # and self.check_msg(message):
-            print("valid")
+            self.GUI_view.printMsg("Valid message: " + message)
             self.actions.commandQueue.put(self.actions.command("check", message))
         elif msg[0:3] == "SET":  # and self.check_msg(message):
-            print("valid")
+            self.GUI_view.printMsg("Valid message: " + message)
             self.actions.commandQueue.put(self.actions.command("set", message))
+        elif message[0:2] == '//':
+            return
         else:
             try:
                 f = open(msg)
                 f.close()
                 self.send_mult(msg)
             except FileNotFoundError:
-                print('File does not exist')
+                self.GUI_view.printMsg('File does not exist')
         # at this point it has the message from the GUI Entry part
 
     def cancel_log(self):

@@ -6,7 +6,6 @@ command tuple: command and argument that gets pushed to the queue
 """
 
 import datetime
-import xlwt
 import time
 import serial
 from collections import namedtuple
@@ -40,17 +39,18 @@ class ArduinoActions():
 
     # sends message to the arduiono
     def send(self, msg):
-        print("send in AA" + msg)
+        print("send in AA " + msg)
         self.view.printMsg("Sent: " + msg + "\n")
+        # can msg should be something like 'SND CHK 002 0000000000000005' according to his
         #self.write_arduino((msg.strip('\n')).encode('utf-8'))
 
     def set(self, msg):
-        print("set in AA" +msg)
+        print("set in AA " +msg)
         self.view.printMsg("Set Sent: " + msg + "\n")
         #self.write_arduino((msg.strip('\n')).encode('utf-8'))
 
     def check(self, msg, timeout):
-        print("check in AA" + msg)
+        print("check in AA " + msg)
         self.view.printMsg("Checking: " + msg + "\n")
         result = self.check_responses(msg, timeout)
         if result != "success":
@@ -180,59 +180,6 @@ class ArduinoActions():
         else:
             return response_list[0]
 
-    # most of this is based on the way that the file / strings are formatted - not sure how to do that
-    # what is /send vs send, /check vs check and /test vs test -> the way that the file is formatted
-    # reads the file and returns a list of tests
-    def read_test_file(self, filename):
-        tests = []
-        try:
-            with open(filename) as test_line:
-                in_test = False
-                in_sending = False
-                in_checking = False
-                msg_to_send = []
-                msg_to_check = []
-                test_name = ""
-                timeout = 1
-                for line in test_line.readlines():
-                    toke = line.strip().split(',')
-                    if len(toke) > 0:
-                        if toke[0][0:2] != "//":  # is a comment in the file
-                            if in_test:
-                                if in_sending:
-                                    if toke[0][1:len(toke[0]) - 1] != "/send":
-                                        if toke[0][0:3] == "SND" or toke[0][0:3] == "del":
-                                            msg_to_send.append(toke[0][0:24].strip())  # not sure why the split is at 24
-                                    else:
-                                        tests.append(self.test(test_name=test_name, test_op="send", test_data=msg_to_send, test_timeout=0))
-                                        msg_to_send = []
-                                        in_sending = False
-                                elif in_checking:
-                                    if toke[0][1:len(toke[0]) - 1] != "/check":
-                                        check = toke[0][0:20]
-                                        msg_to_check.append(check)
-                                    else:
-                                        tests.append(self.test(test_name=test_name, test_op="check", test_data=msg_to_check, test_timeout=timeout))
-                                        in_checking = False
-                                        msg_to_check = []
-                                elif toke[0][1:len(toke[0]) - 1] == "send":
-                                    in_sending = True
-                                elif toke[0][1:] == "check":
-                                    in_checking = True
-                                    timeout = float(toke[1][8:len(toke[1]) - 1])
-                                elif toke[0][1:len(toke[0]) - 1] == "/test":
-                                    in_test = False
-                                    msg_to_send = []
-                                    msg_to_check =[]
-                            else:
-                                if toke[0][1:] == "test":
-                                    test_name = toke[1][10:len(toke[1]) - 2]
-                                    in_test = True
-            return tests
-        except:
-            self.view.printMsg("File not found \n")
-            return "fnf"
-
     def idle(self):
         self.view.printMsg("Idle\n")
         self.arduinoData.write('IDL'.encode('utf-8'))
@@ -248,7 +195,6 @@ class ArduinoActions():
     # checks if the queue is empty
     # takes the  command from command touple and checks what they are
     # send command calls send  in actions for test which actually sends the message
-    # ISN'T THE ONLY  COMMAND SET OR CHECK? why are there others -> need to compare how he did it to how I should do it
     @property
     def handleCommands(self):
         # TODO: edit execTests and send and sendMult to comply w new controller
@@ -264,11 +210,11 @@ class ArduinoActions():
             if sent_command.cmd == "getN":
                 self.get(sent_command.args[0])          # writes data to results.txt file
             elif sent_command.cmd == "send":            # is a button on gui
-                self.send(sent_command.args[0])
+                self.send(sent_command.args)
             elif sent_command.cmd == "set":
-                self.set(sent_command.args[0])
+                self.set(sent_command.args)
             elif sent_command.cmd == "check":
-                self.check(sent_command.args[0], 2)
+                self.check(sent_command.args, 2)
             elif sent_command.cmd == "getCancel":
                 self.doInfiniteLog = False
             elif sent_command.cmd == "getAll":          # am not using
