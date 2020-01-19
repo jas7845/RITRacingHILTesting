@@ -10,8 +10,6 @@ import time
 import serial
 from collections import namedtuple
 import queue
-from serial import Serial
-
 
 class ArduinoActions():
 
@@ -32,8 +30,8 @@ class ArduinoActions():
     filters = []
 
     def __init__(self, arudino_com, baudrate, view):
-        #self.arduino_com = arudino_com
-        #self.baudrate = baudrate
+        self.arduino_com = arudino_com
+        self.baudrate = baudrate
         # changed so that i can try to run it and see if it works
         self.view = view
 
@@ -42,14 +40,14 @@ class ArduinoActions():
         print("send in AA " + msg)
         self.view.printMsg("Sent: " + msg + "\n")
         # can msg should be something like 'SND CHK 002 0000000000000005' according to his
-        #self.write_arduino((msg.strip('\n')).encode('utf-8'))
+        self.write_arduino((msg.strip('\n')).encode('utf-8'))
 
     def set(self, msg):
         print("set in AA " +msg)
         self.view.printMsg("Set Sent: " + msg + "\n")
-        #self.write_arduino((msg.strip('\n')).encode('utf-8'))
+        self.write_arduino((msg.strip('\n')).encode('utf-8'))
 
-    def check(self, msg, timeout):
+    def checkCAN(self, msg, timeout):
         print("check in AA " + msg)
         self.view.printMsg("Checking: " + msg + "\n")
         result = self.check_responses(msg, timeout)
@@ -59,8 +57,9 @@ class ArduinoActions():
             self.view.printMsg("Test: " + msg + " succeeded \n")
 
     def write_arduino(self, msg):
-        a = "abc"
-        # self.arduinoData.write(msg)
+        self.arduinoData.write(msg)
+
+        # send the message via serial to the main
 
     # sends the message in the lines using send function
     def send_mult(self, msgs):
@@ -81,14 +80,14 @@ class ArduinoActions():
 
     # writes the message to a file "results.txt"
     def get(self, msgNum):
-        # self.arduinoData.write('LOG'.encode('utf-8'))
+        self.arduinoData.write('LOG'.encode('utf-8'))
         f = open("results.txt",  "w+")
         for i in range(int(msgNum)):
             get_msg = self.formattedRead(True)
             if get_msg != '':
                 self.view.printMsg(get_msg.strip('\n'))
                 f.write(get_msg)
-        # self.arduinoData.write('IDL'.encode('utf-8'))
+        self.arduinoData.write('IDL'.encode('utf-8'))
         f.close()
 
     # continuously loop and read messages until you stop logging (bool set to false)
@@ -96,7 +95,7 @@ class ArduinoActions():
     def infiniteLog(self, doPrint):
         self.doInfiniteLog = True
         file = open("results.txt", "a")
-        # self.arduinoData.write('LOG'.encode('utf-8'))
+        self.arduinoData.write('LOG'.encode('utf-8'))
         while self.doInfiniteLog:
             get_msg = self.formattedRead(True)
             if get_msg != "":
@@ -105,10 +104,11 @@ class ArduinoActions():
                     self.view.printMsg(get_msg)
             self.handleCommands  # call handle command so it will go back to handle command
         file.close()
-        #self.arduinoData.write('IDL'.encode('utf-8'))
+        self.arduinoData.write('IDL'.encode('utf-8'))
 
     # has stuff about the filter that needs to get rid of
     # Think this is getting data from the arduino and formatting it
+    # TODO: change for send and set messages -- do we even need this?
     def formattedRead(self, timeStamp):
         # commented out for testing :
         # get_msg = self.arduinoData.readline()
@@ -214,7 +214,9 @@ class ArduinoActions():
             elif sent_command.cmd == "set":
                 self.set(sent_command.args)
             elif sent_command.cmd == "check":
-                self.check(sent_command.args, 2)
+                self.checkCAN(sent_command.args, 2)  #should be different but how
+            elif sent_command.cmd == "checkCAN":
+                self.checkCAN(sent_command.args, 2)
             elif sent_command.cmd == "getCancel":
                 self.doInfiniteLog = False
             elif sent_command.cmd == "getAll":          # am not using
@@ -237,7 +239,7 @@ class ArduinoActions():
             return False
 
     def run(self):
-        #self.arduinoData = serial.Serial(self.arduino_com, self.baudrate, timeout=0.5)
+        self.arduinoData = serial.Serial(self.arduino_com, self.baudrate, timeout=0.5)
         self.threadActive = True
         while self.threadActive:
             self.handleCommands  # infinite loop to keep running commands

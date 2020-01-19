@@ -3,11 +3,9 @@ from tkinter import *
 from testing.GUIView import GUIView
 from testing.CommandLineView import CommandLine
 import sys
+import time
 import threading
 import string
-import os
-import time
-import os.path
 from os import path
 
 #  he imports other classes that i have not made yet, not sure if i need to do that
@@ -43,18 +41,9 @@ class GUIController:
             with open(filename) as test_line:
                 for line in test_line.readlines():
                     message = line;
-                    # toke = line.strip().split(',')
-                    '''if len(toke) > 0 and toke[0][0:2] != "//":          # check if it is a comment
-                        if toke[0][0:3] == "SND" and self.check_msg(message):
-                            self.actions.commandQueue.put(self.actions.command("send", message))
-                        elif toke[0][0:3] == "CHK" and self.check_msg(message):
-                            self.actions.commandQueue.put(self.actions.command("check", message))
-                        elif toke[0][0:3] == "SET" and self.check_msg(message):
-                            self.actions.commandQueue.put(self.actions.command("set", message))
-                            # need something to carry out check function
-                            '''
-                    self.send(message)
-
+                    if self.validate_command(message):
+                        self.send(message)
+                    else: print(message + "was not sent")
         except FileNotFoundError:
             self.view.printMsg("File not found \n")
             return "fnf"
@@ -68,17 +57,19 @@ class GUIController:
         split_msg = message.split()  # separates msg where the paces are to a list of words
         # at this point it has the message from the GUI Entry part
         if (split_msg[0] == "CHK") or (split_msg[0] == "SET"):
-            if split_msg[1].isnumeric():
+            if split_msg[1].isnumeric() and len(split_msg[1]) == 3:
                 if (split_msg[2] == "0") or (split_msg[2] == "1"):
                     return True
                 else:  # not 0 or 1 setting
                     self.GUI_view.printMsg("MSG  SET/CHK is invalid, message must be 0 or 1")
             else:  # not valid pin number
-                self.GUI_view.printMsg("MSG SET/CHK is invalid, pin must be a number")
+                self.GUI_view.printMsg("MSG SET/CHK is invalid, id must be a three digit number")
         elif split_msg[0] == "SND":
-            if len(split_msg[1]) == 16 and all(c in string.hexdigits for c in split_msg[1]):
-                return True
-            else: self.GUI_view.printMsg("Message SND of invalid length ")
+            if(len(split_msg[1]) == 3) and split_msg[1].isnumeric():
+                if len(split_msg[2]) == 16 and all(c in string.hexdigits for c in split_msg[2]):  # should it be one or 2
+                    return True
+                else: self.GUI_view.printMsg("Message SND of invalid length ")
+            else: self.GUI_view.printMsg("ID SND of invalid length ")
         elif path.exists(split_msg[0]):
             return True
         else:  # not valid SET or CHK
@@ -99,24 +90,30 @@ class GUIController:
     # else checks if a file, run through file and send each send message and record each check message
     # formats the entry message, pushes a command to a queue in actions for test
     def send(self, message):
-        msg = message.strip()
-        # print("send method GUI Controller: ." + msg[0:3] + ".")
-        if msg[0:3] == "SND":  # and self.check_msg(msg):
-            self.GUI_view.printMsg("Valid message: " + message)
-            self.actions.commandQueue.put(self.actions.command("send", message))
-        elif msg[0:3] == "CHK":  # and self.check_msg(message):
-            self.GUI_view.printMsg("Valid message: " + message)
-            self.actions.commandQueue.put(self.actions.command("check", message))
-        elif msg[0:3] == "SET":  # and self.check_msg(message):
-            self.GUI_view.printMsg("Valid message: " + message)
-            self.actions.commandQueue.put(self.actions.command("set", message))
+        if self.validate_command(message):
+            msg = message.strip()
+            # print("send method GUI Controller: ." + msg[0:3] + ".")
+            if msg[0:3] == "SND":  # and self.check_msg(msg):
+                self.GUI_view.printMsg("Valid message: " + message)
+                self.actions.commandQueue.put(self.actions.command("send", message))
+            elif msg[0:3] == "CHK":  # and self.check_msg(message):
+                if msg.length <= 10:
+                    self.actions.commandQueue.put(self.actions.command("check", message))
+                else:
+                    self.actions.commandQueue.put(self.actions.command("checkCAN", message))
+                self.GUI_view.printMsg("Valid message: " + message)
+            elif msg[0:3] == "SET":  # and self.check_msg(message):
+                self.GUI_view.printMsg("Valid message: " + message)
+                self.actions.commandQueue.put(self.actions.command("set", message))
+        elif message == "//delay":
+            time.sleep(0.003)
         elif message[0:2] == '//':
             return
         else:
             try:
-                f = open(msg)
+                f = open(message)
                 f.close()
-                self.send_mult(msg)
+                self.send_mult(message)
             except FileNotFoundError:
                 self.GUI_view.printMsg('File does not exist')
         # at this point it has the message from the GUI Entry part

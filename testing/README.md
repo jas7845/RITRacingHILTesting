@@ -12,9 +12,12 @@ Enter a file name or test to be run
     parameters: gui/cmd comPort baud 
 
 ## File format:
-file should be formatted as a list of tests. Each test should have a new line. 
+File should be formatted as a list of tests. Each test should have a new line. 
 Comments in the file can be made on a new line indicated by "//". There must be a space between
 SET/CHK pin number and on/off
+
+There is also a comment for a delay which should be in between each line(?)
+this is indicated by //delay
 
 Example:
 
