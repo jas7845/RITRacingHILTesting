@@ -115,7 +115,6 @@ class GUIView:
     def send_data(self, id, msg, logger):
         snd_msg = id.get() + " " + msg.get().strip()
         if self.controller.validate_command(snd_msg):
-            self.printMsg("msg was sent")
             self.controller.send(snd_msg)
             return True
         self.printMsg(snd_msg + " was not sent")

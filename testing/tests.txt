@@ -1,4 +1,4 @@
 // testing file for RIT HIL Testing
-SET 065 1
-// SET 022 1
-// CHK 0 0
+SET 031 1
+CHK 031 0
+SET 031 0

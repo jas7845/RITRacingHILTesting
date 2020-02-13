@@ -41,9 +41,8 @@ class GUIController:
             with open(filename) as test_line:
                 for line in test_line.readlines():
                     message = line;
-                    if self.validate_command(message):
-                        self.send(message)
-                    else: print(message + "was not sent")
+                    if not self.send(message):
+                        print(message + "was not sent")
         except FileNotFoundError:
             self.view.printMsg("File not found \n")
             return "fnf"
@@ -57,13 +56,20 @@ class GUIController:
         split_msg = message.split()  # separates msg where the paces are to a list of words
         # at this point it has the message from the GUI Entry part
         if (split_msg[0] == "CHK") or (split_msg[0] == "SET"):
-            if split_msg[1].isnumeric() and len(split_msg[1]) == 3:
-                if (split_msg[2] == "0") or (split_msg[2] == "1"):
-                    return True
-                else:  # not 0 or 1 setting
-                    self.GUI_view.printMsg("MSG  SET/CHK is invalid, message must be 0 or 1")
+            if (split_msg[2].isnumeric() and len(split_msg[2]) == 3) or split_msg[2][:3] == "DAC":
+                if split_msg[1] == "D":
+                    if (split_msg[3] == "0") or (split_msg[3] == "1"):
+                        return True
+                    else:  # not 0 or 1 setting
+                        self.GUI_view.printMsg("MSG  SET/CHK D is invalid, message must be 0 or 1")
+                elif split_msg[1] == "A":
+                    if split_msg[3].isnumeric():
+                        return True
+                else:  # must specify analog or digital
+                    self.GUI_view.printMsg("MSG SET/CHK is invalid, must specify analog (A) or digital (D)")
             else:  # not valid pin number
                 self.GUI_view.printMsg("MSG SET/CHK is invalid, id must be a three digit number")
+
         elif split_msg[0] == "SND":
             if(len(split_msg[1]) == 3) and split_msg[1].isnumeric():
                 if len(split_msg[2]) == 16 and all(c in string.hexdigits for c in split_msg[2]):  # should it be one or 2
@@ -71,6 +77,8 @@ class GUIController:
                 else: self.GUI_view.printMsg("Message SND of invalid length ")
             else: self.GUI_view.printMsg("ID SND of invalid length ")
         elif path.exists(split_msg[0]):
+            return True
+        elif split_msg[0] == "//delay":
             return True
         else:  # not valid SET or CHK
             self.GUI_view.printMsg("ID is invalid, must SET a pin, SND a CAN message, or CHK a message")
@@ -94,28 +102,28 @@ class GUIController:
             msg = message.strip()
             # print("send method GUI Controller: ." + msg[0:3] + ".")
             if msg[0:3] == "SND":  # and self.check_msg(msg):
-                self.GUI_view.printMsg("Valid message: " + message)
                 self.actions.commandQueue.put(self.actions.command("send", message))
+                return True
             elif msg[0:3] == "CHK":  # and self.check_msg(message):
-                if msg.length <= 10:
+                if len(msg) <= 12:
                     self.actions.commandQueue.put(self.actions.command("check", message))
+                    return True
                 else:
                     self.actions.commandQueue.put(self.actions.command("checkCAN", message))
-                self.GUI_view.printMsg("Valid message: " + message)
+                    return True
             elif msg[0:3] == "SET":  # and self.check_msg(message):
-                self.GUI_view.printMsg("Valid message: " + message)
                 self.actions.commandQueue.put(self.actions.command("set", message))
-        elif message == "//delay":
-            time.sleep(0.003)
-        elif message[0:2] == '//':
-            return
-        else:
-            try:
-                f = open(message)
-                f.close()
-                self.send_mult(message)
-            except FileNotFoundError:
-                self.GUI_view.printMsg('File does not exist')
+                return True
+            elif message == "//delay":
+                time.sleep(0.003)
+                return True
+            elif message[0:2] == '//':
+                return
+            else:
+                try:
+                    self.send_mult(msg)
+                except FileNotFoundError:
+                    self.GUI_view.printMsg('File does not exist')
         # at this point it has the message from the GUI Entry part
 
     def cancel_log(self):

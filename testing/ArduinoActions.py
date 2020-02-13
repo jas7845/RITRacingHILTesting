@@ -11,6 +11,7 @@ import serial
 from collections import namedtuple
 import queue
 
+
 class ArduinoActions():
 
     msg_line = 1
@@ -37,18 +38,42 @@ class ArduinoActions():
 
     # sends message to the arduiono
     def send(self, msg):
-        print("send in AA " + msg)
         self.view.printMsg("Sent: " + msg + "\n")
         # can msg should be something like 'SND CHK 002 0000000000000005' according to his
         self.write_arduino((msg.strip('\n')).encode('utf-8'))
 
+    # has stuff about the filter that needs to get rid of
+    # Think this is getting data from the arduino and formatting it
+    def formattedRead(self, timeStamp):  # had argument "timeStamp"
+        # commented out for testing :
+        msg_txt = ""
+        while self.arduinoData.in_waiting:
+            pass
+        get_msg = self.arduinoData.readline()
+        print(get_msg)
+        msg_txt = (get_msg.decode("utf-8")).strip(' \t\n\r')
+        #if self.filter_active and not self.filter_text(msg_txt):
+        #    return ""
+        if msg_txt != "":
+            msg_txt = "0" + msg_txt.upper()
+            if timeStamp:
+                msg_txt = msg_txt + "   " + datetime.datetime.fromtimestamp(time.time()).strftime('%H:%M:%S.%f') + "\n"
+        return msg_txt
+
+    def check(self, msg):
+        self.view.printMsg("checked: " + msg + "\n")
+        self.checkCAN(msg, 2)
+        # can msg should be something like 'SND CHK 002 0000000000000005' according to his
+        #print(self.formattedRead())
+        #self.write_arduino((msg.strip('\n')).encode('utf-8'))
+        # then need to get whatever is printed into the check
+
     def set(self, msg):
-        print("set in AA " +msg)
         self.view.printMsg("Set Sent: " + msg + "\n")
+        msg.strip()
         self.write_arduino((msg.strip('\n')).encode('utf-8'))
 
     def checkCAN(self, msg, timeout):
-        print("check in AA " + msg)
         self.view.printMsg("Checking: " + msg + "\n")
         result = self.check_responses(msg, timeout)
         if result != "success":
@@ -58,6 +83,7 @@ class ArduinoActions():
 
     def write_arduino(self, msg):
         self.arduinoData.write(msg)
+        time.sleep(2)  # added so that it wouldnt send them all at the same time
 
         # send the message via serial to the main
 
@@ -106,24 +132,32 @@ class ArduinoActions():
         file.close()
         self.arduinoData.write('IDL'.encode('utf-8'))
 
-    # has stuff about the filter that needs to get rid of
-    # Think this is getting data from the arduino and formatting it
-    # TODO: change for send and set messages -- do we even need this?
-    def formattedRead(self, timeStamp):
-        # commented out for testing :
-        # get_msg = self.arduinoData.readline()
-        # msg_txt = (get_msg.decode("utf-8")).strip(' \t\n\r')
-        get_msg = self.commandQueue.get()
-        self.commandQueue.put(get_msg)
-        msg_txt = get_msg.cmd
+    def filter_text(self, msg):
+        if msg != "":
+            for val in self.filters:
+                split = msg.split()
+                if val.type == "id":
+                    if split[0] == val.item:
+                        return True
+                elif val.type == "msg":
+                    if split[1] == val.item:
+                        return True
+        return False
 
-        # if self.filter_active and not self.filter_text(msg_txt):
-        #    return ""
-        if msg_txt != "":
-            msg_txt = "0" + msg_txt.upper()
-            if timeStamp:
-                msg_txt = msg_txt + "   " + datetime.datetime.fromtimestamp(time.time()).strftime('%H:%M:%S.%f') + "\n"
-        return msg_txt
+    def remove_filter(self, to_remove):
+        for val in self.filters:
+            if val.item == to_remove:
+                self.filters.remove(val)
+
+    def add_filter(self, filter_item, filter_type):
+        self.filters.append(self.filter_item(item=filter_item, type=filter_type))
+
+    def toggle_filters(self):
+        if self.filter_active:
+            self.filter_active = False
+        else:
+            self.filter_active = True
+
 
     # handles send and check messages?
     def exec_tests(self, filename):
@@ -145,6 +179,7 @@ class ArduinoActions():
                         self.view.printMsg("Failed test: " + curr_test_name + "\n failed on: " + result + "\n")
                     else:
                         self.view.printMsg("Test: " + curr_test_name + " succeeded \n")
+
 
     # Not really sure what this is doing, should be comparing the received messages with the response
     #    list but  im not sure how, something to do with "X" in the string
@@ -206,7 +241,6 @@ class ArduinoActions():
                 return False
             else:
                 print(sent_command)
-
             if sent_command.cmd == "getN":
                 self.get(sent_command.args[0])          # writes data to results.txt file
             elif sent_command.cmd == "send":            # is a button on gui
@@ -214,7 +248,7 @@ class ArduinoActions():
             elif sent_command.cmd == "set":
                 self.set(sent_command.args)
             elif sent_command.cmd == "check":
-                self.checkCAN(sent_command.args, 2)  #should be different but how
+                self.check(sent_command.args)  #should be different but how
             elif sent_command.cmd == "checkCAN":
                 self.checkCAN(sent_command.args, 2)
             elif sent_command.cmd == "getCancel":
@@ -239,7 +273,8 @@ class ArduinoActions():
             return False
 
     def run(self):
-        self.arduinoData = serial.Serial(self.arduino_com, self.baudrate, timeout=0.5)
+        self.arduinoData = serial.Serial(self.arduino_com, self.baudrate, timeout=0.5, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE)
+        self.arduinoData.reset_input_buffer()
         self.threadActive = True
         while self.threadActive:
             self.handleCommands  # infinite loop to keep running commands
