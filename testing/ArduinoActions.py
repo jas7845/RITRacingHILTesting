@@ -36,21 +36,12 @@ class ArduinoActions():
         # changed so that i can try to run it and see if it works
         self.view = view
 
-    # sends message to the arduiono
-    def send(self, msg):
-        self.view.printMsg("Sent: " + msg + "\n")
-        # can msg should be something like 'SND CHK 002 0000000000000005' according to his
-        self.write_arduino((msg.strip('\n')).encode('utf-8'))
-
     # has stuff about the filter that needs to get rid of
     # Think this is getting data from the arduino and formatting it
     def formattedRead(self, timeStamp):  # had argument "timeStamp"
         # commented out for testing :
         msg_txt = ""
-        while self.arduinoData.in_waiting:
-            pass
         get_msg = self.arduinoData.readline()
-        print(get_msg)
         msg_txt = (get_msg.decode("utf-8")).strip(' \t\n\r')
         #if self.filter_active and not self.filter_text(msg_txt):
         #    return ""
@@ -60,18 +51,19 @@ class ArduinoActions():
                 msg_txt = msg_txt + "   " + datetime.datetime.fromtimestamp(time.time()).strftime('%H:%M:%S.%f') + "\n"
         return msg_txt
 
+    # sends message to the arduiono
+    def send(self, msg):
+        self.view.printMsg("Sent: " + msg + "\n")
+        self.write_arduino((msg.strip('\n')).encode('utf-8'))
+
     def check(self, msg):
         self.view.printMsg("checked: " + msg + "\n")
+        self.send(msg)
         self.checkCAN(msg, 2)
         # can msg should be something like 'SND CHK 002 0000000000000005' according to his
         #print(self.formattedRead())
         #self.write_arduino((msg.strip('\n')).encode('utf-8'))
         # then need to get whatever is printed into the check
-
-    def set(self, msg):
-        self.view.printMsg("Set Sent: " + msg + "\n")
-        msg.strip()
-        self.write_arduino((msg.strip('\n')).encode('utf-8'))
 
     def checkCAN(self, msg, timeout):
         self.view.printMsg("Checking: " + msg + "\n")
@@ -189,12 +181,14 @@ class ArduinoActions():
         while not got_all_messages and (time.time()-start_time) <= timeout:
             received_msg = self.formattedRead(False).strip('|')
             msg_to_remove = []
-            # To compare each message we need to split the ID and message into their respective hex values
             if received_msg != "":
+                self.view.printMsg("received: " + received_msg + "\n")
+            # To compare each message we need to split the ID and message into their respective hex values
+            if received_msg != "" and len(received_msg.split(' ')) > 1:
                 id = received_msg.split(' ')[0]     # send or check
                 msg = received_msg.split(' ')[1]    # which pin to go to
                 self.view.printMsg("received: " + received_msg + "\n")
-                for i in range(len(response_list)):
+                '''for i in range(len(response_list)):
                     check_id = response_list[i].split(' ')[0]
                     check_msg = response_list[i].split(' ')[1]
                     msg_match = True
@@ -210,6 +204,7 @@ class ArduinoActions():
                 # This line will remove a response from a list if it is in the response list
                 # response_list[:] = [checkMsg for checkMsg in response_list if not (int(checkMsg.split(' ')[0], 16) == idVal
                 #                                                                    and int(checkMsg.split(' ')[1], 16) == msgVal)]
+                '''
         if len(response_list) == 0:
             return "success"
         else:
@@ -246,7 +241,7 @@ class ArduinoActions():
             elif sent_command.cmd == "send":            # is a button on gui
                 self.send(sent_command.args)
             elif sent_command.cmd == "set":
-                self.set(sent_command.args)
+                self.send(sent_command.args)
             elif sent_command.cmd == "check":
                 self.check(sent_command.args)  #should be different but how
             elif sent_command.cmd == "checkCAN":

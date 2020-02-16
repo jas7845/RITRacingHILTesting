@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <due_can.h>
+//#include <due_can.h>
 #define  testID     0x0A
 #define  Max_len    8
 #define  testMsgH   0x00000070
@@ -25,8 +25,8 @@ int randCounter = 0;
 void setup() {
   // put your setup code here, to run once:
   //printf("in loop main");
-  Can0.begin(CAN_BPS_500K);
-  Can1.begin(CAN_BPS_500K);
+//  Can0.begin(CAN_BPS_500K);
+//  Can1.begin(CAN_BPS_500K);
   
   Serial.begin(115200);
   Serial.println("setup");
@@ -41,24 +41,24 @@ void setup() {
 void logData(){
 //keep the same
   //Continuously read data
-    readCAN();
+//    readCAN();
     //delay(1);
 }
 
 /**
 * Does something
-*/
+
 void readCAN(){
-  Can0.watchFor();
+//  Can0.watchFor();
   String msg = "";
   CAN_FRAME incoming;
-  if(Can0.available()>0){
-    Can0.read(incoming);
+//  if(Can0.available()>0){
+//    Can0.read(incoming);
     //Serial.print(const_char(incoming.id));
     //Serial.print(String(incoming.id));
   }
 }
-
+*/
 /**
 * need to change the CAN, not sure what to
 * Arduino Method in the Arduino IDE
@@ -100,7 +100,7 @@ void setDataDigital(int id, int data){
 */
 void setDataAnalog(int id, int data){
     // values between 0 and 4095
-    analogWriteResolution(12);
+//    analogWriteResolution(12);
     pinMode(id, OUTPUT);
     //Serial.println("in setDATA main");
     // values between 0 and 4095
@@ -140,7 +140,7 @@ int checkDataDigital(int id, int data){
 */
 int checkDataAnalog(int id, int data){
     // change max resolution to 12 bits not 10
-    analogReadResolution(12);
+//    analogReadResolution(12);
     pinMode(id, OUTPUT);
     Serial.println("in checkDATA main");
     int val = analogRead(id);
@@ -151,11 +151,11 @@ int checkDataAnalog(int id, int data){
 // keep the same
 /**
 * Sends data to a pin
-*/
+
 void sendData(uint32_t ID, uint8_t data[]){
   //Uses can_due to send the data
 
-  CAN_FRAME outgoing;
+//  CAN_FRAME outgoing;
   //uint32_t testIDvar = ID;
   //Serial.println(ID, HEX);
   outgoing.id = ID;
@@ -164,11 +164,11 @@ void sendData(uint32_t ID, uint8_t data[]){
     outgoing.data.bytes[i] = data[i];
   }
   Can1.watchFor();
-  Can0.sendFrame(outgoing);
+//  Can0.sendFrame(outgoing);
   //Serial.println("Sent");
 
 }
-
+*/
 
 /**
 * Converts a hex char to Byte
@@ -217,6 +217,7 @@ void serialEvent(){
       idString.trim();
       String dataString;
       int id;
+      /*
       if(idString == "DAC"){
         if(msg.substring(6,10) == "DAC0"){
           //Serial.println("DAC0");
@@ -229,9 +230,10 @@ void serialEvent(){
         dataString = msg.substring(11);
       }
       else{
+      */
         id = idString.toInt();
         dataString = msg.substring(10);
-      }
+      //}
       dataString.trim();
       //Serial.println(idString + ".");
       //int id = idString.toInt();
@@ -321,7 +323,7 @@ void serialEvent(){
         
         //Serial.println(checkData(id, data));
     }
- 
+ /*
     if (prefix == "SND"){
         //sometimes the arduino cant read them fast enough, need to slow them down
         // will build up a buffer of multiple send messages and then check it
@@ -350,6 +352,7 @@ void serialEvent(){
             sendData(id, data);
         }
     }
+    */
     else if (prefix == "LOG"){
         state = Log;
         logData();

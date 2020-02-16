@@ -5,6 +5,7 @@ from testing.CommandLineView import CommandLine
 import sys
 import time
 import threading
+from threading import Lock
 import string
 from os import path
 
@@ -14,7 +15,8 @@ from os import path
 class GUIController:
     actions = None
     GUI_view = None
-    logging = False;
+    logging = False
+    lock = Lock()
 
     def __init__(self, master):
         if sys.argv[1] == "gui":

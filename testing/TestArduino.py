@@ -17,7 +17,7 @@ class TestArduino():
     commandQueue = queue.Queue(100)  # queue that contains the commands
     command = namedtuple('command', 'cmd args')
     arduino_com = None
-    baudrate = None
+    baudrate = 0
     port = None
     view = None
     filter_active = None
@@ -29,27 +29,19 @@ class TestArduino():
     def __init__(self, arudino_com, baudrate):
         self.arduino_com = arudino_com
         self.baudrate = baudrate
-        self.main()
         # changed so that i can try to run it and see if it works
 
     def write_arduino(self, msg):
-        self.arduinoData.write(msg)
+        self.arduinoData.write((msg.strip('\n')).encode('utf-8'))
         time.sleep(2)  # added so that it wouldnt send them all at the same time
 
     def formatted_read(self, time_stamp):  # had argument "timeStamp"
         # commented out for testing :
         msg_txt = ""
-        while self.arduinoData.in_waiting:
-            pass
+        #while self.arduinoData.in_waiting:
+        #    pass
         get_msg = self.arduinoData.readline()
-        print(get_msg)
         msg_txt = (get_msg.decode("utf-8")).strip(' \t\n\r')
-        # if self.filter_active and not self.filter_text(msg_txt):
-        #    return ""
-        if msg_txt != "":
-            msg_txt = "0" + msg_txt.upper()
-            if time_stamp:
-                msg_txt = msg_txt + "   " + datetime.datetime.fromtimestamp(time.time()).strftime('%H:%M:%S.%f') + "\n"
         return msg_txt
 
     '''
@@ -61,13 +53,12 @@ class TestArduino():
             self.main()  # infinite loop to keep running commands
     '''
 
-    def main(self):
-        self.arduinoData = serial.Serial(self.baudrate, self.port, timeout=0.5, bytesize=serial.EIGHTBITS,
-                                         parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE)
-        self.arduinoData.reset_input_buffer()
+    @property
+    def handleCommands(self):
         keep_going = True
+        print("Input: ")
         while keep_going:
-            print("Input: ")
+
             request = input(">")
             direction = request.split(" ")
             if direction[0] == "SND":
@@ -77,4 +68,12 @@ class TestArduino():
                 print("Output: " +self.formatted_read(False))
             else:
                 keep_going = False
+
+    def run(self):
+        print("run")
+        self.arduinoData = serial.Serial(self.arduino_com, self.baudrate, timeout=0.5, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE)
+        self.arduinoData.reset_input_buffer()
+        self.threadActive = True
+        while self.threadActive:
+            self.handleCommands  # infinite loop to keep running commands
 
