@@ -53,13 +53,15 @@ class ArduinoActions():
 
     # sends message to the arduiono
     def send(self, msg):
-        self.view.printMsg("Sent: " + msg + "\n")
+        if msg[0:4] != " CHK":
+            self.view.printMsg("Sent: " + msg + "\n")
         self.write_arduino((msg.strip('\n')).encode('utf-8'))
 
-    def check(self, msg):
+    def check(self, msg, timeout):
         self.view.printMsg("checked: " + msg + "\n")
         self.send(msg)
-        self.checkCAN(msg, 2)
+        result = self.check_responses(msg, timeout)
+        self.view.printMsg("Value of pin " + str(msg[6:10]) + " is: " + str(result) + '\n')
         # can msg should be something like 'SND CHK 002 0000000000000005' according to his
         #print(self.formattedRead())
         #self.write_arduino((msg.strip('\n')).encode('utf-8'))
@@ -182,7 +184,7 @@ class ArduinoActions():
             received_msg = self.formattedRead(False).strip('|')
             msg_to_remove = []
             if received_msg != "":
-                self.view.printMsg("received: " + received_msg + "\n")
+                return received_msg
             # To compare each message we need to split the ID and message into their respective hex values
             if received_msg != "" and len(received_msg.split(' ')) > 1:
                 id = received_msg.split(' ')[0]     # send or check
@@ -243,7 +245,7 @@ class ArduinoActions():
             elif sent_command.cmd == "set":
                 self.send(sent_command.args)
             elif sent_command.cmd == "check":
-                self.check(sent_command.args)  #should be different but how
+                self.check(sent_command.args, 2)  #should be different but how
             elif sent_command.cmd == "checkCAN":
                 self.checkCAN(sent_command.args, 2)
             elif sent_command.cmd == "getCancel":

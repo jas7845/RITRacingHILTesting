@@ -84,12 +84,12 @@ void setDataDigital(int id, int data){
     Serial.print(data);
     Serial.print(".");
     if(data == 1){
-        Serial.println("HIGH");
+        //Serial.println("HIGH");
         digitalWrite(id, HIGH);
         delay(2000);
     }
     else{
-        Serial.println("LOW");
+        //Serial.println("LOW");
         digitalWrite(id, LOW);
         delay(2000);
     }
@@ -106,10 +106,10 @@ void setDataAnalog(int id, int data){
     // values between 0 and 4095
     // when i put in 300 it consistently goes to .7 on reader thing
     // due is 3.3V, 12bit resolution, DAC0 == A0
-    Serial.println(data);
+    //Serial.println(data);
     //analogWrite(id, 0);
     if(data <= 4094){
-      Serial.println(data);
+      //Serial.println(data);
       analogWrite(id, data);
     }
     delay(1000);
@@ -132,7 +132,7 @@ int checkDataDigital(int id, int data){
         return 0;
         delay(2000);
     }
-    return 10;
+    return val;
 }
 
 /**
@@ -142,7 +142,7 @@ int checkDataAnalog(int id, int data){
     // change max resolution to 12 bits not 10
 //    analogReadResolution(12);
     pinMode(id, OUTPUT);
-    Serial.println("in checkDATA main");
+    //Serial.println("in checkDATA main");
     int val = analogRead(id);
     return val;
     delay(200);
@@ -202,15 +202,10 @@ String const_char(uint32_t data){
 * Method to handle messages coming through the serial
 */
 void serialEvent(){
-    Serial.println("serial event method");
+    //Serial.println("serial event method");
     String msg = Serial.readString();
     msg.trim();
-    // something weird with the front sting
-    
     String prefix = msg.substring(0,3);
-    Serial.println("."+msg+ ".");
-    //Serial.println("."+prefix+ ".");
-    
     if (prefix == "SET"){
       //number are off for substring
       String idString = msg.substring(6,9); // would have the same length in the string
@@ -235,8 +230,6 @@ void serialEvent(){
         dataString = msg.substring(10);
       //}
       dataString.trim();
-      //Serial.println(idString + ".");
-      //int id = idString.toInt();
       // get the data of the send message SET 000 0
       int data = dataString.toInt();
       if(msg.substring(4,5) == "A"){
@@ -247,8 +240,6 @@ void serialEvent(){
         //Serial.println("digital");
         setDataDigital(id, data);
       }
-      //Serial.println(msg.substring(4,7));
-      //Serial.println(msg.substring(8));
       // parse id and set pin using arduino functions
         /*int dataLength = msg.length()/9;
         // how many messages there are
@@ -285,7 +276,7 @@ void serialEvent(){
       String dataString = msg.substring(10); // get the data of the send message SET 000 0
       int data = dataString.toInt();
       if(msg.substring(4,5) == "A"){
-        checkDataAnalog(id, data);
+        Serial.println(checkDataAnalog(id, data));
       }
       else if(msg.substring(4,5) == "D"){
         checkDataDigital(id, data);
@@ -319,9 +310,6 @@ void serialEvent(){
             // have an option to send analog data
         }
         */
-        //Serial.print("in chk");
-        
-        //Serial.println(checkData(id, data));
     }
  /*
     if (prefix == "SND"){

@@ -107,7 +107,7 @@ class GUIController:
                 self.actions.commandQueue.put(self.actions.command("send", message))
                 return True
             elif msg[0:3] == "CHK":  # and self.check_msg(message):
-                if len(msg) <= 12:
+                if len(msg) <= 16:
                     self.actions.commandQueue.put(self.actions.command("check", message))
                     return True
                 else:
@@ -142,10 +142,10 @@ class GUIController:
     def log(self):
         if self.logging:  # if logging then stop
             self.actions.commandQueue.put(self.actions.command("getCancel", []))
-            self.logging = False;
+            self.logging = False
         else:
             self.actions.commandQueue.put(self.actions.command("getBackground", [True]))
-            self.logging = True;
+            self.logging = True
 
     def idle(self):
         self.actions.idle()
